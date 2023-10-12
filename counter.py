@@ -2,7 +2,7 @@ import logging
 import sys
 
 import numpy as np
-from pymeasure.display.Qt import QtGui
+from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 from pymeasure.experiment import Procedure, Results
 from pymeasure.experiment.parameters import (
@@ -70,7 +70,7 @@ class CounterTimeseriesProcedure(Procedure):
             back_to_back=True,
         )
 
-        freqs = self.counter.read_buffer(expected_length=self.n_samples)
+        freqs = self.counter.read_buffer(n=self.n_samples)
 
         time = np.linspace(0, duration, num=len(freqs))
 
@@ -110,7 +110,7 @@ class MainWindow(ManagedWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
