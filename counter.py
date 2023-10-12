@@ -1,6 +1,5 @@
 import logging
 import sys
-from time import sleep
 
 import numpy as np
 from pymeasure.display.Qt import QtGui
@@ -12,20 +11,31 @@ from pymeasure.experiment.parameters import (
     ListParameter,
 )
 from pymeasure.experiment.results import unique_filename
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.pendulum import CNT91
+from pymeasure.instruments.pendulum import (
+    CNT91,
+    MAX_BUFFER_SIZE,
+    MAX_GATE_TIME,
+    MIN_BUFFER_SIZE,
+    MIN_GATE_TIME,
+)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class CounterTimeseriesProcedure(Procedure):
-
     n_samples = IntegerParameter(
-        "Number of samples", default=int(1e3), minimum=1, maximum=int(1e5)
+        "Number of samples",
+        default=1000,
+        minimum=MIN_BUFFER_SIZE,
+        maximum=MAX_BUFFER_SIZE,
     )
-    sample_rate = FloatParameter(
-        "Sample rate", units="Hz", default=1e3, maximum=1e5
+    gate_time = FloatParameter(
+        "Gate time",
+        units="s",
+        default=1e-3,
+        minimum=MIN_GATE_TIME,
+        maximum=MAX_GATE_TIME,
     )
     channel = ListParameter(
         "Channel", default="B", choices=["A", "B", "C", "E", "INTREF"]
@@ -43,7 +53,7 @@ class CounterTimeseriesProcedure(Procedure):
     def execute(self):
         log.info("Recording time series.")
 
-        duration = self.n_samples / self.sample_rate
+        duration = self.n_samples * self.gate_time
 
         trigger_source = self.trigger_source
         if trigger_source == "None":
@@ -53,7 +63,11 @@ class CounterTimeseriesProcedure(Procedure):
         log.info("Measurement duration is {}s".format(duration))
 
         self.counter.buffer_frequency_time_series(
-            self.channel, self.n_samples, self.sample_rate, trigger_source=None
+            self.channel,
+            self.n_samples,
+            self.gate_time,
+            trigger_source=trigger_source,
+            back_to_back=True,
         )
 
         freqs = self.counter.read_buffer(expected_length=self.n_samples)
@@ -72,13 +86,13 @@ class MainWindow(ManagedWindow):
     def __init__(self):
         super(MainWindow, self).__init__(
             procedure_class=CounterTimeseriesProcedure,
-            inputs=["n_samples", "sample_rate", "channel", "trigger_source"],
-            displays=["n_samples", "sample_rate"],
+            inputs=["n_samples", "gate_time", "channel", "trigger_source"],
+            displays=["n_samples", "gate_time"],
             x_axis="Time",
             y_axis="Frequency",
             directory_input=True,
             sequencer=True,
-            sequencer_inputs=["n_samples", "sample_rate"],
+            sequencer_inputs=["n_samples", "gate_time"],
         )
         self.setWindowTitle("Frequency time series")
 
