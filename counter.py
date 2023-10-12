@@ -11,7 +11,7 @@ from pymeasure.experiment.parameters import (
     ListParameter,
 )
 from pymeasure.experiment.results import unique_filename
-from pymeasure.instruments.pendulum import (
+from pymeasure.instruments.pendulum.cnt91 import (
     CNT91,
     MAX_BUFFER_SIZE,
     MAX_GATE_TIME,
