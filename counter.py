@@ -65,7 +65,7 @@ class CounterTimeseriesProcedure(Procedure):
         self.counter.buffer_frequency_time_series(
             self.channel,
             self.n_samples,
-            self.gate_time,
+            gate_time=self.gate_time,
             trigger_source=trigger_source,
             back_to_back=True,
         )
@@ -90,7 +90,7 @@ class MainWindow(ManagedWindow):
             displays=["n_samples", "gate_time"],
             x_axis="Time",
             y_axis="Frequency",
-            directory_input=True,
+            enable_file_input=True,
             sequencer=True,
             sequencer_inputs=["n_samples", "gate_time"],
         )
