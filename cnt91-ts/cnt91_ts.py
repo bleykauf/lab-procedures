@@ -109,8 +109,12 @@ class MainWindow(ManagedWindow):
         self.manager.queue(experiment)
 
 
-if __name__ == "__main__":
+def main():
     app = QtWidgets.QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
