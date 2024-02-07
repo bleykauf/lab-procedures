@@ -90,7 +90,7 @@ class MainWindow(ManagedWindow):
             displays=["n_samples", "gate_time"],
             x_axis="Time",
             y_axis="Frequency",
-            enable_file_input=True,
+            directory_input=True,
             sequencer=True,
             sequencer_inputs=["n_samples", "gate_time"],
         )
