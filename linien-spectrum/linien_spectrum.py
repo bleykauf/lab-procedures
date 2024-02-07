@@ -2,7 +2,7 @@ import logging
 import pickle
 import sys
 
-from linien.client.connection import LinienClient
+from linien_client.connection import LinienClient
 from pymeasure.display.Qt import QtGui
 from pymeasure.display.windows import ManagedWindow
 from pymeasure.experiment import Procedure, Results
@@ -74,8 +74,12 @@ class MainWindow(ManagedWindow):
         self.manager.queue(experiment)
 
 
-if __name__ == "__main__":
+def main():
     app = QtGui.QApplication(sys.argv)
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    main()

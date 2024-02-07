@@ -2,19 +2,17 @@ import logging
 from time import sleep
 
 import numpy as np
-
-from pymeasure.log import console_log
+from ctl200 import laser
+from pymeasure.display import Plotter
 from pymeasure.experiment import (
+    FloatParameter,
     IntegerParameter,
     Procedure,
     Results,
     Worker,
-    FloatParameter,
 )
-from pymeasure.display import Plotter
 from pymeasure.instruments.thorlabs import ThorlabsPM100USB
-
-from ctl200 import laser
+from pymeasure.log import console_log
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -59,7 +57,7 @@ class PICharacteristicsProcedure(Procedure):
         self.laser.close()
 
 
-if __name__ == "__main__":
+def main():
     console_log(log)
 
     log.info("Constructing PICharacteristicsProcedure")
@@ -85,3 +83,7 @@ if __name__ == "__main__":
     log.info("Joining with the worker in at most 20 s.")
     worker.join(timeout=20)
     log.info("Finished the measurement")
+
+
+if __name__ == "__main__":
+    main()
