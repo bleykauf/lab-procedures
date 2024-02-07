@@ -18,7 +18,13 @@ classifiers = [
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
 ]
-dependencies = ["mog_qrf>=0.2.0", "pymeasure=<0.13.1"]
+dependencies = [
+    "mog_qrf>=0.2.0",
+    "pymeasure>=0.13.1",
+    "PySide6",
+    "meer_tec>=1.0.0",
+    "numpy",
+]
 
 [project.optional-dependencies]
 dev = [

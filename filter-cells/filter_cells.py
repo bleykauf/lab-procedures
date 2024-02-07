@@ -9,7 +9,7 @@ from mog_qrf import QRF
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 from pymeasure.experiment import Procedure, Results
-from pymeasure.experiment.parameters import FloatParameter, IntegerParameter
+from pymeasure.experiment.parameters import FloatParameter, ListParameter
 from pymeasure.experiment.results import unique_filename
 from pymeasure.instruments.thorlabs import ThorlabsPM100USB
 
@@ -21,15 +21,15 @@ class FilterCellProcedure(Procedure):
     start_frequency = FloatParameter(
         "Start frequency of the ramp",
         units="MHz",
-        default=10.0,
-        minimum=1.0,
+        default=80.0,
+        minimum=4.0,
         maximum=250.0,
     )
 
     stop_frequency = FloatParameter(
         "Start frequency of the ramp",
         units="MHz",
-        default=50.0,
+        default=120.0,
         minimum=1.0,
         maximum=250.0,
     )
@@ -37,19 +37,17 @@ class FilterCellProcedure(Procedure):
     frequency_step = FloatParameter(
         "Size of the frequency step",
         units="MHz",
-        default=1.0,
+        default=0.1,
         minimum=0.00001,
         maximum=10.0,
     )
 
-    channel = IntegerParameter(
-        "Channel for the frequency sweep", default=1, minimum=1, maximum=4
-    )
+    qrf_channel = ListParameter("QRF channel", default=2, choices=[1, 2, 3, 4])
 
     step_time = FloatParameter(
         "Wait time between frequency steps",
         units="s",
-        default=1.0,
+        default=0.1,
         minimum=0.1,
         maximum=10.0,
     )
@@ -57,7 +55,7 @@ class FilterCellProcedure(Procedure):
     cell_temperature = FloatParameter(
         "Temperature of the filter cell",
         units="C",
-        default=40.0,
+        default=60.0,
         minimum=0.0,
         maximum=100.0,
     )
@@ -74,38 +72,42 @@ class FilterCellProcedure(Procedure):
 
     def startup(self):
         log.info("Connecting to MOGlabs QRF")
-        self.qrf = QRF("192.168.0.103")
-        self.pm = ThorlabsPM100USB()
-        usb = USB()
-        self.tec = TEC(usb)
+        self.qrf = QRF("192.168.123.51")
+        self.pm = ThorlabsPM100USB("USB0::0x1313::0x8078::P0032734::INSTR")
+        self.usb = USB("COM3")
+        self.tec = TEC(self.usb, 0)
 
     def execute(self):
         log.info("Heating the filter cell to the desired temperature.")
-        self.tec.object_temperature = self.cell_temperature
+
+        self.tec.target_object_temperature_ch1 = self.cell_temperature
         elapsed_time = 0
-        while not self.tec.is_stable:
+        while not self.tec.is_stable == 2:
             elapsed_time += 1
             sleep(1)
             if elapsed_time >= self.max_heat_time:
                 log.error("Temperature of the filter cell did not stabilize in time.")
                 break
-
-        if self.tec.is_stable:
+    
+        if self.tec.is_stable == 2:
             log.info("Temperature of the filter cell stabilized.")
 
-        freqs = np.arange(
-            self.start_frequency, self.stop_frequency, self.frequency_step
-        )
-
         log.info("Start recording absorption spectrum.")
+        if self.stop_frequency < self.start_frequency:
+            self.frequency_step = -self.frequency_step
+        freqs = np.arange(
+            self.start_frequency, self.stop_frequency, self.frequency_step + self.frequency_step
+        )
         for f in freqs:
-            self.qrf.freq(self.channel, f)
-            p = self.pm.power()
+            self.qrf.freq(self.qrf_channel, f)
+            p = self.pm.power
             sleep(self.step_time)
             self.emit("results", {"Frequency": f, "Power": p})
+        self.usb.close()
 
         if self.should_stop():
             log.warning("Caught the stop flag in the procedure")
+            self.usb.close()
             return
 
 
@@ -114,7 +116,7 @@ class MainWindow(ManagedWindow):
         super(MainWindow, self).__init__(
             procedure_class=FilterCellProcedure,
             inputs=[
-                "channel",
+                "qrf_channel",
                 "start_frequency",
                 "stop_frequency",
                 "frequency_step",
@@ -122,7 +124,7 @@ class MainWindow(ManagedWindow):
                 "cell_temperature",
                 "max_heat_time",
             ],
-            displays=["start_frequency", "stop_frequency", "frequency_step"],
+            displays=["start_frequency", "stop_frequency", "cell_temperature"],
             x_axis="Frequency",
             y_axis="Power",
             directory_input=True,
