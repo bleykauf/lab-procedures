@@ -74,7 +74,7 @@ class FilterCellProcedure(Procedure):
         default=180.0,
         minimum=0.0,
         maximum=600.0,
-    )    
+    )
 
     DATA_COLUMNS = ["Frequency", "Power"]
 
@@ -87,16 +87,27 @@ class FilterCellProcedure(Procedure):
 
     def execute(self):
         freqs = np.arange(
-            self.start_frequency, self.stop_frequency + self.frequency_step, self.frequency_step
+            self.start_frequency,
+            self.stop_frequency + self.frequency_step,
+            self.frequency_step,
         )
-        self.qrf.set_timeout(2 * (self.max_heat_time + self.thermalization_time + self.step_time * len(freqs)))
+
+        total_duration = (
+            self.max_heat_time + self.thermalization_time + self.step_time * len(freqs)
+        )
+
+        self.qrf.set_timeout(2 * total_duration)
         self.qrf.freq(self.qrf_channel, self.start_frequency)
-        sleep(1) # to avoid a sudden frequency change at the beginning of the measurement
+        sleep(
+            1
+        )  # to avoid a sudden frequency change at the beginning of the measurement
 
         temp_changed = False
         if self.cell_temperature != self.tec.target_object_temperature:
             temp_changed = True
-            log.info(f"Heating the filter cell to the desired temperature of {self.cell_temperature} C.")
+            log.info(
+                f"Heating the filter cell to the desired temperature of {self.cell_temperature} C."
+            )
 
             try:
                 self.tec.target_object_temperature = self.cell_temperature
@@ -113,7 +124,7 @@ class FilterCellProcedure(Procedure):
         if temp_changed:
             log.info("Waiting for the filter cell to thermalize.")
             sleep(self.thermalization_time)
-    
+
         if self.tec.is_stable == 2:
             log.info("Temperature of the filter cell stabilized.")
 
@@ -149,7 +160,7 @@ class MainWindow(ManagedWindow):
                 "max_heat_time",
                 "thermalization_time",
             ],
-            displays=[ "cell_temperature", "start_frequency", "stop_frequency"],
+            displays=["cell_temperature", "start_frequency", "stop_frequency"],
             x_axis="Frequency",
             y_axis="Power",
             directory_input=True,
