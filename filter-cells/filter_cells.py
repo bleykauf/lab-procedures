@@ -60,8 +60,8 @@ class FilterCellProcedure(Procedure):
         maximum=100.0,
     )
 
-    max_heat_time = FloatParameter(
-        "Maximum time to heat the cell to the desired temperature",
+    heat_time = FloatParameter(
+        "Time to wait after setting desired cell temperature for thermalisation",
         units="s",
         default=60.0,
         minimum=10.0,
@@ -78,16 +78,15 @@ class FilterCellProcedure(Procedure):
         self.tec = TEC(self.usb, 0)
 
     def execute(self):
-        log.info("Heating the filter cell to the desired temperature.")
+        log.info(f"Heating the filter cell to the desired temperature of {self.cell_temperature}.")
 
-        self.tec.target_object_temperature_ch1 = self.cell_temperature
-        elapsed_time = 0
-        while not self.tec.is_stable == 2:
-            elapsed_time += 1
-            sleep(1)
-            if elapsed_time >= self.max_heat_time:
-                log.error("Temperature of the filter cell did not stabilize in time.")
-                break
+        try:
+            self.tec.target_object_temperature = self.cell_temperature
+        except ValueError:
+            # there is a bug in the library, see https://github.com/bleykauf/meer_tec/issues/4
+            pass
+        sleep(self.heat_time)
+
     
         if self.tec.is_stable == 2:
             log.info("Temperature of the filter cell stabilized.")
@@ -96,7 +95,7 @@ class FilterCellProcedure(Procedure):
         if self.stop_frequency < self.start_frequency:
             self.frequency_step = -self.frequency_step
         freqs = np.arange(
-            self.start_frequency, self.stop_frequency, self.frequency_step + self.frequency_step
+            self.start_frequency, self.stop_frequency + self.frequency_step, self.frequency_step
         )
         for f in freqs:
             self.qrf.freq(self.qrf_channel, f)
