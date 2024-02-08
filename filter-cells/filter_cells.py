@@ -126,6 +126,7 @@ class FilterCellProcedure(Procedure):
             p = self.pm.power
             sleep(self.step_time)
             self.emit("results", {"Frequency": f, "Power": p})
+        self.qrf.freq(self.qrf_channel, self.start_frequency)
         self.usb.close()
 
         if self.should_stop():
