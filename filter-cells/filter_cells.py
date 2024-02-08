@@ -21,7 +21,7 @@ class FilterCellProcedure(Procedure):
     start_frequency = FloatParameter(
         "Start frequency of the ramp",
         units="MHz",
-        default=80.0,
+        default=160.0,
         minimum=4.0,
         maximum=250.0,
     )
@@ -29,7 +29,7 @@ class FilterCellProcedure(Procedure):
     stop_frequency = FloatParameter(
         "Start frequency of the ramp",
         units="MHz",
-        default=120.0,
+        default=250.0,
         minimum=1.0,
         maximum=250.0,
     )
@@ -47,8 +47,8 @@ class FilterCellProcedure(Procedure):
     step_time = FloatParameter(
         "Wait time between frequency steps",
         units="s",
-        default=0.1,
-        minimum=0.1,
+        default=0.01,
+        minimum=0.001,
         maximum=10.0,
     )
 
@@ -60,13 +60,21 @@ class FilterCellProcedure(Procedure):
         maximum=100.0,
     )
 
-    heat_time = FloatParameter(
-        "Time to wait after setting desired cell temperature for thermalisation",
+    max_heat_time = FloatParameter(
+        "Maximum time to wait after setting desired cell temperature",
         units="s",
         default=60.0,
         minimum=10.0,
         maximum=600.0,
     )
+
+    thermalization_time = FloatParameter(
+        "Waiting period after setting the temperature of the filter cell to the desired value",
+        units="s",
+        default=180.0,
+        minimum=0.0,
+        maximum=600.0,
+    )    
 
     DATA_COLUMNS = ["Frequency", "Power"]
 
@@ -78,15 +86,33 @@ class FilterCellProcedure(Procedure):
         self.tec = TEC(self.usb, 0)
 
     def execute(self):
-        log.info(f"Heating the filter cell to the desired temperature of {self.cell_temperature}.")
+        freqs = np.arange(
+            self.start_frequency, self.stop_frequency + self.frequency_step, self.frequency_step
+        )
+        self.qrf.set_timeout(2 * (self.max_heat_time + self.thermalization_time + self.step_time * len(freqs)))
+        self.qrf.freq(self.qrf_channel, self.start_frequency)
+        sleep(1) # to avoid a sudden frequency change at the beginning of the measurement
 
-        try:
-            self.tec.target_object_temperature = self.cell_temperature
-        except ValueError:
-            # there is a bug in the library, see https://github.com/bleykauf/meer_tec/issues/4
-            pass
-        sleep(self.heat_time)
+        temp_changed = False
+        if self.cell_temperature != self.tec.target_object_temperature:
+            temp_changed = True
+            log.info(f"Heating the filter cell to the desired temperature of {self.cell_temperature} C.")
 
+            try:
+                self.tec.target_object_temperature = self.cell_temperature
+            except ValueError:
+                # there is a bug in the library, see https://github.com/bleykauf/meer_tec/issues/4
+                pass
+        elapsed_time = 0
+        while not self.tec.is_stable == 2:
+            elapsed_time += 1
+            sleep(1)
+            if elapsed_time >= self.max_heat_time:
+                log.error("Temperature of the filter cell did not stabilize in time.")
+                break
+        if temp_changed:
+            log.info("Waiting for the filter cell to thermalize.")
+            sleep(self.thermalization_time)
     
         if self.tec.is_stable == 2:
             log.info("Temperature of the filter cell stabilized.")
@@ -94,9 +120,7 @@ class FilterCellProcedure(Procedure):
         log.info("Start recording absorption spectrum.")
         if self.stop_frequency < self.start_frequency:
             self.frequency_step = -self.frequency_step
-        freqs = np.arange(
-            self.start_frequency, self.stop_frequency + self.frequency_step, self.frequency_step
-        )
+
         for f in freqs:
             self.qrf.freq(self.qrf_channel, f)
             p = self.pm.power
@@ -122,17 +146,18 @@ class MainWindow(ManagedWindow):
                 "step_time",
                 "cell_temperature",
                 "max_heat_time",
+                "thermalization_time",
             ],
-            displays=["start_frequency", "stop_frequency", "cell_temperature"],
+            displays=[ "cell_temperature", "start_frequency", "stop_frequency"],
             x_axis="Frequency",
             y_axis="Power",
             directory_input=True,
             sequencer=True,
             sequencer_inputs=[
+                "cell_temperature",
                 "start_frequency",
                 "stop_frequency",
                 "frequency_step",
-                "cell_temperature",
             ],
         )
         self.setWindowTitle("Absorption spectrum")
