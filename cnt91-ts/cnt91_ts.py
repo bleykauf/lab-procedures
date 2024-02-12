@@ -5,14 +5,13 @@ from datetime import datetime, timedelta
 import numpy as np
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
-from pymeasure.experiment import Procedure, Results
+from pymeasure.experiment import Procedure
 from pymeasure.experiment.parameters import (
     FloatParameter,
     IntegerParameter,
     ListParameter,
     Metadata,
 )
-from pymeasure.experiment.results import unique_filename
 from pymeasure.instruments.pendulum.cnt91 import (
     CNT91,
     MAX_BUFFER_SIZE,
@@ -26,6 +25,8 @@ log.addHandler(logging.NullHandler())
 
 
 class CounterTimeseriesProcedure(Procedure):
+    start_time = Metadata("Start time", default="")
+
     n_samples = IntegerParameter(
         "Number of samples",
         default=1000,
@@ -46,19 +47,18 @@ class CounterTimeseriesProcedure(Procedure):
         "Trigger source", default="None", choices=["None", "A", "B", "E"]
     )
 
-    start_time = Metadata("Start time")
-
     DATA_COLUMNS = ["Time", "Frequency"]
 
     def startup(self):
         log.info("Connecting to Pendulum CNT9x")
         self.counter = CNT91("USB0::0x14EB::0x0091::956628::INSTR")
+        self.start_time = datetime.now().isoformat()
 
     def get_estimates(self):
         duration = self.n_samples * self.gate_time
         estimates = [
             ("Duration / s", f"{duration}"),
-            "Finised at" f"{datetime.now() + timedelta(seconds=duration)}",
+            ("Finised at", f"{datetime.now() + timedelta(seconds=duration)}"),
         ]
         return estimates
 
@@ -82,13 +82,12 @@ class CounterTimeseriesProcedure(Procedure):
             trigger_source=trigger_source,
             back_to_back=True,
         )
-        self.start_time = datetime.now()
         log.info("Waiting for data to be buffered")
 
         freqs = self.counter.read_buffer(n=self.n_samples)
-        time = np.linspace(0, duration, num=len(freqs))
+        times = np.linspace(0, duration, num=len(freqs))
 
-        for t, f in zip(time, freqs):
+        for t, f in zip(times, freqs):
             self.emit("results", {"Time": t, "Frequency": f})
 
         if self.should_stop():
@@ -104,25 +103,13 @@ class MainWindow(ManagedWindow):
             displays=["n_samples", "gate_time"],
             x_axis="Time",
             y_axis="Frequency",
-            directory_input=True,
+            enable_file_input=True,
             sequencer=True,
             sequencer_inputs=["n_samples", "gate_time"],
         )
         self.setWindowTitle("Frequency time series")
 
-        self.filename = r"default_filename_gate_time{Gate time}s"
-
-    def queue(self, *, procedure=None):
-        directory = self.directory
-        filename = unique_filename(directory, prefix="CNT91")
-
-        if procedure is None:
-            procedure = self.make_procedure()
-        results = Results(procedure, filename)
-
-        experiment = self.new_experiment(results)
-
-        self.manager.queue(experiment)
+        self.filename = r"cnt91-gatetime{Gate time}s"
 
 
 def main():
