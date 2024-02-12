@@ -6,7 +6,7 @@ from time import sleep
 import allantools
 import numpy as np
 from pymeasure.display.Qt import QtWidgets
-from pymeasure.display.windows import ManagedWindow
+from pymeasure.display.windows.managed_dock_window import ManagedDockWindow
 from pymeasure.experiment import Procedure
 from pymeasure.experiment.parameters import (
     FloatParameter,
@@ -124,14 +124,14 @@ class CounterTimeseriesProcedure(Procedure):
             return
 
 
-class MainWindow(ManagedWindow):
+class MainWindow(ManagedDockWindow):
     def __init__(self):
         super(MainWindow, self).__init__(
             procedure_class=CounterTimeseriesProcedure,
             inputs=["n_samples", "gate_time", "channel", "trigger_source", "base_freq"],
             displays=["n_samples", "gate_time"],
-            x_axis="Time",
-            y_axis="Frequency",
+            x_axis=["Time", "Tau"],
+            y_axis=["Frequency", "Allan Deviation"],
             enable_file_input=True,
             sequencer=True,
             sequencer_inputs=["n_samples", "gate_time"],
