@@ -1,5 +1,6 @@
 import logging
 import sys
+from datetime import datetime, timedelta
 
 import numpy as np
 from pymeasure.display.Qt import QtWidgets
@@ -9,6 +10,7 @@ from pymeasure.experiment.parameters import (
     FloatParameter,
     IntegerParameter,
     ListParameter,
+    Metadata,
 )
 from pymeasure.experiment.results import unique_filename
 from pymeasure.instruments.pendulum.cnt91 import (
@@ -41,14 +43,24 @@ class CounterTimeseriesProcedure(Procedure):
         "Channel", default="B", choices=["A", "B", "C", "E", "INTREF"]
     )
     trigger_source = ListParameter(
-        "Trigger Source", default="None", choices=["None", "A", "B", "E"]
+        "Trigger source", default="None", choices=["None", "A", "B", "E"]
     )
+
+    start_time = Metadata("Start time")
 
     DATA_COLUMNS = ["Time", "Frequency"]
 
     def startup(self):
         log.info("Connecting to Pendulum CNT9x")
         self.counter = CNT91("USB0::0x14EB::0x0091::956628::INSTR")
+
+    def get_estimates(self):
+        duration = self.n_samples * self.gate_time
+        estimates = [
+            ("Duration / s", f"{duration}"),
+            "Finised at" f"{datetime.now() + timedelta(seconds=duration)}",
+        ]
+        return estimates
 
     def execute(self):
         log.info("Recording time series.")
@@ -61,6 +73,7 @@ class CounterTimeseriesProcedure(Procedure):
             trigger_source = None
 
         log.info("Measurement duration is {}s".format(duration))
+        log.info("Start buffering data")
 
         self.counter.buffer_frequency_time_series(
             self.channel,
@@ -69,9 +82,10 @@ class CounterTimeseriesProcedure(Procedure):
             trigger_source=trigger_source,
             back_to_back=True,
         )
+        self.start_time = datetime.now()
+        log.info("Waiting for data to be buffered")
 
         freqs = self.counter.read_buffer(n=self.n_samples)
-
         time = np.linspace(0, duration, num=len(freqs))
 
         for t, f in zip(time, freqs):
@@ -95,6 +109,8 @@ class MainWindow(ManagedWindow):
             sequencer_inputs=["n_samples", "gate_time"],
         )
         self.setWindowTitle("Frequency time series")
+
+        self.filename = r"default_filename_gate_time{Gate time}s"
 
     def queue(self, *, procedure=None):
         directory = self.directory
