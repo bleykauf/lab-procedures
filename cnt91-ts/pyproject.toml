@@ -18,7 +18,10 @@ classifiers = [
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
 ]
-dependencies = ["numpy>=1.26.4", "pymeasure=<0.13.1"]
+dependencies = [
+    "numpy>=1.26.4",
+    "pymeasure@git+https://github.com/pymeasure/pymeasure.git",
+]
 
 [project.optional-dependencies]
 dev = [
