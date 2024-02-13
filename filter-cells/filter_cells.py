@@ -21,13 +21,13 @@ class FilterCellProcedure(Procedure):
     start_frequency = FloatParameter(
         "Start frequency of the ramp",
         units="MHz",
-        default=160.0,
+        default=110.0,
         minimum=4.0,
         maximum=250.0,
     )
 
     stop_frequency = FloatParameter(
-        "Start frequency of the ramp",
+        "Stop frequency of the ramp",
         units="MHz",
         default=250.0,
         minimum=1.0,
@@ -86,6 +86,8 @@ class FilterCellProcedure(Procedure):
         self.tec = TEC(self.usb, 0)
 
     def execute(self):
+        if self.stop_frequency < self.start_frequency:
+            self.frequency_step = -self.frequency_step
         freqs = np.arange(
             self.start_frequency, self.stop_frequency + self.frequency_step, self.frequency_step
         )
@@ -118,8 +120,6 @@ class FilterCellProcedure(Procedure):
             log.info("Temperature of the filter cell stabilized.")
 
         log.info("Start recording absorption spectrum.")
-        if self.stop_frequency < self.start_frequency:
-            self.frequency_step = -self.frequency_step
 
         for f in freqs:
             self.qrf.freq(self.qrf_channel, f)
