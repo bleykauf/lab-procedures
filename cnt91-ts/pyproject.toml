@@ -3,7 +3,7 @@ requires = ["setuptools>=30.3.0", "wheel"]
 
 [project]
 name = "cnt91-ts"
-version = "0.1.0"
+version = "0.2.0"
 description = "Recording time series of the CNT91 counter"
 authors = [
     { name = "Bastian Leykauf" },
@@ -18,7 +18,10 @@ classifiers = [
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
 ]
-dependencies = ["numpy>=1.26.4", "pymeasure=<0.13.1"]
+dependencies = [
+    "numpy>=1.26.4",
+    "pymeasure@git+https://github.com/pymeasure/pymeasure.git",
+]
 
 [project.optional-dependencies]
 dev = [
