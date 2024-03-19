@@ -74,7 +74,7 @@ class ReadoutPowerLevelProcedure(Procedure):
 
     def startup(self):
         log.info("Connecting to AQ6370D")
-        self.osa = AQ6370D("TCPIP::192.168.123.169::INSTR")
+        self.osa = AQ6370D("TCPIP::192.168.123.169::INSTR", timeout=10_000)
         self.osa.sweep_mode = "REPEAT"
 
     def execute(self):
