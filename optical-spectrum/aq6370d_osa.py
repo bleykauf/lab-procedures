@@ -42,6 +42,14 @@ class ReadoutPowerLevelProcedure(Procedure):
         maximum=2250e-9,
     )
 
+    reference_level = FloatParameter(
+        "Reference Level",
+        default=0.0,
+        units="dBm",
+        minimum=-90.0,
+        maximum=20.0,
+    )
+
     level_position = IntegerParameter(
         "Level Position",
         default=8,
@@ -73,13 +81,15 @@ class ReadoutPowerLevelProcedure(Procedure):
         self.osa.wavelength_start = self.wavelength_start
         self.osa.wavelength_stop = self.wavelength_stop
         self.osa.resolution_bandwidth = self.resolution_bandwidth
+        self.osa.reference_level = self.reference_level
         self.osa.level_position = self.level_position
         self.osa.automatic_sample_number = not self.manual_sample_number
         if self.manual_sample_number:
             self.osa.sample_number = self.sample_number
         self.osa.sweep_mode = "SINGLE"
         self.osa.initiate_sweep()
-        sleep(3)  # wait for the sweep to complete, temporary solution
+        while self.osa.values(":STAT:OPER:EVEN?")[0]:
+            sleep(0.1)
         x_data = self.osa.get_xdata()
         y_data = self.osa.get_ydata()
         for x, y in zip(x_data, y_data):
@@ -99,6 +109,7 @@ class MainWindow(ManagedWindow):
                 "wavelength_start",
                 "wavelength_stop",
                 "resolution_bandwidth",
+                "reference_level",
                 "level_position",
                 "manual_sample_number",
                 "sample_number",
@@ -107,6 +118,7 @@ class MainWindow(ManagedWindow):
                 "wavelength_start",
                 "wavelength_stop",
                 "resolution_bandwidth",
+                "reference_level",
                 "level_position",
                 "manual_sample_number",
                 "sample_number",
@@ -116,7 +128,7 @@ class MainWindow(ManagedWindow):
             enable_file_input=True,
         )
         self.setWindowTitle("Optical Spectral Analyzer AQ6370D")
-        self.filename = "Power_level_vs_Wavelength.csv"
+        self.filename = "optical_spectrum.csv"
 
 
 def main():
