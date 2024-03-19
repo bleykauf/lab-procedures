@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=30.3.0", "wheel"]
+
+[project]
+name = "optical-spectrum"
+version = "0.1.0"
+description = "Record a spectrum from a Yokogawa AQ6370D optical spectrum analyzer."
+authors = [
+    { name = "Bastian Leykauf" },
+    { email = "leykauf@physik.hu-berlin.de" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+]
+dependencies = ["pymeasure@git+https://github.com/pymeasure/pymeasure.git"]
+
+[project.optional-dependencies]
+dev = [
+    "black>=22.8.0",
+    "pre-commit>=2.20.0",
+    "flake8>=5.0.4",
+    "isort>=5.10.1",
+    "flake8-pyproject>=1.2.3",
+]
+
+[project.urls]
+homepage = "https://github.com/bleykauf/lab-procedures/"
+repository = "https://github.com/bleykauf/lab-procedures/"
+
+[project.scripts]
+optical-spectrum = "optical_spectrum:main"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = "E203"
+docstring-convention = "numpy"
+
+[tool.isort]
+profile = "black"
