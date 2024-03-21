@@ -20,10 +20,9 @@ classifiers = [
 ]
 dependencies = [
     "pymeasure@git+https://github.com/pymeasure/pymeasure.git",
-    "mogdevice@git+https://github.com/bleykauf/mogdevice.git",
+    "mogdevice>=1.2.1",
     "adboxes",
 ]
-
 [project.optional-dependencies]
 dev = [
     "black>=22.8.0",
@@ -40,6 +39,9 @@ repository = "https://github.com/bleykauf/lab-procedures/"
 [project.scripts]
 mot-telescope-calibration = "mot_telescope_calibration:main"
 qrf-vs-pm = "qrf_vs_pm:main"
+
+[tool.setuptools]
+py-modules = ["mot_telescope_calibration", "qrf_vs_pm"]
 
 [tool.flake8]
 max-line-length = 88
