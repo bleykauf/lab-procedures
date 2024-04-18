@@ -163,7 +163,7 @@ class MainWindow(ManagedWindow):
             displays=["cell_temperature", "start_frequency", "stop_frequency"],
             x_axis="Frequency",
             y_axis="Power",
-            directory_input=True,
+            enable_file_input=True,
             sequencer=True,
             sequencer_inputs=[
                 "cell_temperature",
