@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=30.3.0", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel"]
 
 [project]
 name = "mot-telescope-calibration"
@@ -41,7 +41,11 @@ mot-telescope-calibration = "mot_telescope_calibration:main"
 qrf-vs-pm = "qrf_vs_pm:main"
 
 [tool.setuptools]
+include-package-data = true
 py-modules = ["mot_telescope_calibration", "qrf_vs_pm"]
+
+[tool.setuptools.exclude-package-data]
+mypkg = ["*.txt"]
 
 [tool.flake8]
 max-line-length = 88
