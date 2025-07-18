@@ -20,7 +20,8 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.26.4",
-    "pymeasure@git+https://github.com/pymeasure/pymeasure.git",
+    "pymeasure>=0.15.0",
+    "allantools>=2024.6",
 ]
 
 [project.optional-dependencies]

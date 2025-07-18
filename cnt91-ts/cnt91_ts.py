@@ -43,7 +43,7 @@ class CounterTimeseriesProcedure(Procedure):
         maximum=MAX_GATE_TIME,
     )
     channel = ListParameter(
-        "Channel", default="B", choices=["A", "B", "C", "E", "INTREF"]
+        "Channel", default="A", choices=["A", "B", "C", "E", "INTREF"]
     )
     trigger_source = ListParameter(
         "Trigger source", default="None", choices=["None", "A", "B", "E"]
@@ -60,7 +60,7 @@ class CounterTimeseriesProcedure(Procedure):
 
     def startup(self):
         log.info("Connecting to Pendulum CNT9x")
-        self.counter = CNT91("USB0::0x14EB::0x0091::956628::INSTR")
+        self.counter = CNT91("USB0::0x14EB::0x0091::517306::INSTR")
         self.start_time = datetime.now().isoformat()
 
     def get_estimates(self):
